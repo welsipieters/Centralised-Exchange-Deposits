@@ -1,66 +1,120 @@
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+// Importing required contracts and interfaces from OpenZeppelin and local files
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "./DepositContract.sol";
 
-contract DepositContract is AccessControl, ReentrancyGuard, Pausable {
-    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
+/**
+ * @title DepositAddressFactory
+ * @notice This contract facilitates the creation of new DepositContract instances. 
+ * It also manages administrative tasks like pausing/unpausing operations, 
+ * updating cold storage addresses, and maintaining a list of contract admins.
+ */
+contract DepositAddressFactory is Pausable {
+
+    // Address where assets are stored securely
     address public coldStorage;
 
-    // Events
-    event EtherSwept(address indexed to, uint256 amount);
-    event ERC20TokenSwept(address indexed tokenAddress, address indexed to, uint256 amount);
-    event ERC721TokenSwept(address indexed nftAddress, uint256 tokenId, address indexed to);
+    // Mapping to track contracts deployed by this factory
+    mapping(address => bool) public deployedContracts;
 
-    constructor(address _coldStorage) {
-        _setupRole(OWNER_ROLE, msg.sender);
-        coldStorage = _coldStorage;
-    }
+    // Mapping to track admin addresses
+    mapping(address => bool) public admins;
 
-    modifier onlyOwner() {
-        require(hasRole(OWNER_ROLE, msg.sender), "Not authorized");
+    event ContractDeployed(address contractAddress);
+
+    // Modifier to ensure that the function is only callable by an admin
+    modifier onlyAdmin() {
+        require(admins[msg.sender], "Access restricted to admins");
         _;
     }
 
-    function pause() external onlyOwner {
+    /**
+     * @dev Constructor to initialize the cold storage address and set the deployer as an admin.
+     * @param _coldStorage Address of the cold storage.
+     */
+    constructor(address _coldStorage) {
+        require(_coldStorage != address(0), "Invalid cold storage address");
+        coldStorage = _coldStorage;
+        admins[msg.sender] = true;
+    }
+
+    /**
+     * @notice Deploys a new instance of the DepositContract.
+     * @return Address of the newly deployed contract.
+     */
+    function deployNewContract() external onlyAdmin whenNotPaused returns(address) {
+        DepositContract newContract = new DepositContract(coldStorage);
+        deployedContracts[address(newContract)] = true;
+        emit ContractDeployed(address(newContract));
+        return address(newContract);
+    }
+
+    /**
+     * @notice Deploys multiple instances of the DepositContract.
+     * @param count Number of contracts to deploy.
+     * @return An array of addresses of the newly deployed contracts.
+     */
+    function deployMultipleContracts(uint256 count) external onlyAdmin whenNotPaused returns(address[] memory) {
+        address[] memory deployedAddresses = new address[](count);
+        for (uint256 i = 0; i < count; i++) {
+            DepositContract newContract = new DepositContract(coldStorage);
+            deployedContracts[address(newContract)] = true;
+            deployedAddresses[i] = address(newContract);
+            emit ContractDeployed(address(newContract));
+        }
+        return deployedAddresses;
+    }
+
+    /**
+     * @notice Adds a new admin.
+     * @param _admin Address of the new admin.
+     */
+    function addAdmin(address _admin) external onlyAdmin {
+        require(_admin != address(0), "Invalid admin address");
+        admins[_admin] = true;
+    }
+
+    /**
+     * @notice Removes an admin.
+     * @param _admin Address of the admin to be removed.
+     */
+    function removeAdmin(address _admin) external onlyAdmin {
+        require(_admin != address(0), "Invalid admin address");
+        admins[_admin] = false;
+    }
+
+    /**
+     * @notice Returns the cold storage address.
+     * @return Address of the cold storage.
+     */
+    function getColdStorageAddress() external view returns (address) {
+        return coldStorage;
+    }
+
+    /**
+     * @notice Updates the cold storage address.
+     * @param _coldStorage New cold storage address.
+     */
+    function setColdStorageAddress(address _coldStorage) external onlyAdmin {
+        require(_coldStorage != address(0), "Invalid cold storage address");
+        coldStorage = _coldStorage;
+    }
+
+    /**
+     * @notice Pauses all contract operations.
+     */
+    function pauseContract() external onlyAdmin {
         _pause();
     }
 
-    function unpause() external onlyOwner {
+    /**
+     * @notice Resumes all contract operations.
+     */
+    function unpauseContract() external onlyAdmin {
         _unpause();
     }
-
-    function sweepERC20Token(address tokenAddress) external onlyOwner whenNotPaused nonReentrant {
-        IERC20 token = IERC20(tokenAddress);
-        uint256 tokenBalance = token.balanceOf(address(this));
-        if (tokenBalance > 0) {
-            require(token.transfer(coldStorage, tokenBalance), "Token transfer failed");
-            emit ERC20TokenSwept(tokenAddress, coldStorage, tokenBalance);
-        }
-    }
-
-    function sweepERC721Tokens(address nftAddress, uint256[] memory tokenIds) external onlyOwner whenNotPaused nonReentrant {
-        IERC721 nft = IERC721(nftAddress);
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            uint256 tokenId = tokenIds[i];
-            require(nft.ownerOf(tokenId) == address(this), "Token not owned by contract");
-            nft.transferFrom(address(this), coldStorage, tokenId);
-            emit ERC721TokenSwept(nftAddress, tokenId, coldStorage);
-        }
-    }
-
-    function sweepEther() external onlyOwner whenNotPaused nonReentrant {
-        uint256 ethBalance = address(this).balance;
-        if (ethBalance > 0) {
-            payable(coldStorage).transfer(ethBalance);
-            emit EtherSwept(coldStorage, ethBalance);
-        }
-    }
-
-    // Allow the contract to accept ether
-    receive() external payable {}
 }
