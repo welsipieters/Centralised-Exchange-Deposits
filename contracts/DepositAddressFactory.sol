@@ -47,7 +47,7 @@ contract DepositAddressFactory is Pausable {
      * @return Address of the newly deployed contract.
      */
     function deployNewContract() external onlyAdmin whenNotPaused returns(address) {
-        DepositContract newContract = new DepositContract(coldStorage);
+        DepositContract newContract = new DepositContract(address(this));
         deployedContracts[address(newContract)] = true;
         emit ContractDeployed(address(newContract));
         return address(newContract);
@@ -61,7 +61,7 @@ contract DepositAddressFactory is Pausable {
     function deployMultipleContracts(uint256 count) external onlyAdmin whenNotPaused returns(address[] memory) {
         address[] memory deployedAddresses = new address[](count);
         for (uint256 i = 0; i < count; i++) {
-            DepositContract newContract = new DepositContract(coldStorage);
+            DepositContract newContract = new DepositContract(address(this));
             deployedContracts[address(newContract)] = true;
             deployedAddresses[i] = address(newContract);
             emit ContractDeployed(address(newContract));

@@ -31,8 +31,8 @@ contract DepositContract {
     }
 
     // Constructor to initialize the factory reference
-    constructor() {
-        factory = DepositAddressFactory(msg.sender);
+    constructor(address _factory) {
+        factory = DepositAddressFactory(_factory);
     }
 
     /**
@@ -71,5 +71,5 @@ contract DepositContract {
     }
 
     // Fallback function to allow the contract to receive Ether transfers
-    receive() external payable {}
+    receive() external payable ifFactoryNotPaused {}
 }

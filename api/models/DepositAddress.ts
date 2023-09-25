@@ -1,7 +1,4 @@
-export enum AddressStatus {
-    UNUSED = "unused",
-    IN_USE = "in-use"
-}
+
 
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { AddressStatus } from './enums/AddressStatus';

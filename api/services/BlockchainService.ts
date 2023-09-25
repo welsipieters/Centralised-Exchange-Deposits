@@ -1,15 +1,16 @@
 import { ethers } from 'ethers';
 import {IBlockchainService} from "../interfaces";
 import {injectable} from "inversify";
+import blockchainConfig from "../blockchainConfig";
 
 @injectable()
 export class BlockchainService implements IBlockchainService {
-    private provider: ethers.providers.JsonRpcProvider;
+    private readonly provider: ethers.JsonRpcProvider;
     private contract: ethers.Contract;
 
     constructor() {
-        this.provider = new ethers.providers.JsonRpcProvider('YOUR_ETHEREUM_NODE_URL');
-        this.contract = new ethers.Contract(YOUR_CONTRACT_ADDRESS, YOUR_CONTRACT_ABI, this.provider);
+        this.provider = blockchainConfig.provider;
+        this.contract = new ethers.Contract(blockchainConfig.contractAddress, blockchainConfig.contractAbi, this.provider);
     }
 
     async generateAddresses(count: number): Promise<string[]> {
