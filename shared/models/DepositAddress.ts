@@ -23,4 +23,7 @@ export class DepositAddress {
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
     updated_at: Date;
+
+    @Column({ type: 'bigint', nullable: true })
+    last_seen_at_block: number;
 }

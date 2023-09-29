@@ -44,7 +44,6 @@
     "coverage": "hardhat coverage",
     "typechain": "hardhat typechain",
     "verify": "hardhat verify",
-    "deploy": "hardhat run --network localhost scripts/deploy.ts",
-    "serve": "ts-node api/index.ts"
+    "serve": "hardhat run api/index.ts"
   }
 }

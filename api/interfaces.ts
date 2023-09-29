@@ -1,4 +1,4 @@
-import {DepositAddress} from "./models/DepositAddress";
+import {DepositAddress} from "../shared/models/DepositAddress";
 
 export interface IBlockchainService {
     generateAddresses(count: number): Promise<string>;

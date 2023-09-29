@@ -9,12 +9,12 @@ module.exports = {
     "database": process.env.DB_NAME || "test",
     "synchronize": false,
     "logging": false,
-    "entities": ["api/models/**/*.ts"],
-    "migrations": ["api/migrations/**/*.ts"],
-    "subscribers": ["api/subscriber/**/*.ts"],
+    "entities": ["shared/models/**/*.ts"],
+    "migrations": ["shared/migrations/**/*.ts"],
+    "subscribers": ["shared/subscribers/**/*.ts"],
     "cli": {
-        "entitiesDir": "api/models",
-        "migrationsDir": "api/migrations",
-        "subscribersDir": "api/subscribers"
+        "entitiesDir": "shared/models",
+        "migrationsDir": "shared/migrations",
+        "subscribersDir": "shared/subscribers"
     }
 }

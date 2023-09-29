@@ -1,7 +1,7 @@
 import { getRepository, Repository } from 'typeorm';
 import { DepositAddress } from '../models/DepositAddress';
 import { injectable } from 'inversify';
-import {IDatabaseService} from "../interfaces";
+import {IDatabaseService} from "../../api/interfaces";
 import {AddressStatus} from "../models/enums/AddressStatus";
 
 @injectable()

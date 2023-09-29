@@ -1,9 +1,9 @@
 import { ethers } from 'ethers';
-import {IBlockchainService, IDatabaseService} from "../interfaces";
+import {IBlockchainService, IDatabaseService} from "../../api/interfaces";
 import {injectable} from "inversify";
 import blockchainConfig from "../blockchainConfig";
-import types from "../types";
-import {container} from "../inversify.config";
+import types from "../../api/types";
+import {container} from "../../api/inversify.config";
 
 @injectable()
 export class BlockchainService implements IBlockchainService {
@@ -31,7 +31,9 @@ export class BlockchainService implements IBlockchainService {
 
         if (receipt.logs) {
             for (const log of receipt.logs) {
+                // @ts-ignore
                 if (log.fragment.name === 'ContractDeployed') {
+                    // @ts-ignore
                     const address = log.args && log.args[0];
                     if (address) deployedAddresses.push(address);
                 }
