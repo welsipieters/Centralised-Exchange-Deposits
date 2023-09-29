@@ -1,6 +1,7 @@
-import {MigrationInterface, QueryRunner, Table, TableIndex} from 'typeorm';
+import {MigrationInterface, QueryRunner, Table, TableIndex} from "typeorm"
 
-export class CreateDepositAddressesMigration implements MigrationInterface {
+export class CreateDepositAddressesMigration1695952913697 implements MigrationInterface {
+
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.createTable(new Table({
             name: 'deposit_address',
@@ -24,12 +25,12 @@ export class CreateDepositAddressesMigration implements MigrationInterface {
                     default: "'unused'"
                 },
                 {
-                    name: 'createdAt',
+                    name: 'created_at',
                     type: 'timestamp',
                     default: 'CURRENT_TIMESTAMP',
                 },
                 {
-                    name: 'updatedAt',
+                    name: 'updated_at',
                     type: 'timestamp',
                     default: 'CURRENT_TIMESTAMP',
                     onUpdate: 'CURRENT_TIMESTAMP',
@@ -47,4 +48,5 @@ export class CreateDepositAddressesMigration implements MigrationInterface {
         await queryRunner.dropIndex('deposit_address', 'IDX_DEPOSIT_ADDRESS_STATUS');
         await queryRunner.dropTable('deposit_address');
     }
+
 }

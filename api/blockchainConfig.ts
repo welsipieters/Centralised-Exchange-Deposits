@@ -1,33 +1,44 @@
 import { ethers } from 'ethers';
-
+import hardhatConfig from "../hardhat.config";
+import factoryAbi from "../abi/factory.json";
+import depositAbi from "../abi/deposit.json";
 export class BlockchainConfig {
     public readonly network: string;
     public readonly provider: ethers.JsonRpcProvider;
+    public readonly signer: ethers.Wallet;
     public readonly contractAddress: string;
-    public readonly contractAbi: any;
+    public readonly factoryAbi: any;
+    public readonly depositAbi: any;
 
     constructor() {
         this.network = process.env.BLOCKCHAIN_NETWORK || 'hardhat';
-        const providerUrl = this.network === 'hardhat' ?
-            'http://localhost:8545' :
-            process.env.BLOCKCHAIN_PROVIDER_URL;
+        const hardhatNetworkConfig = hardhatConfig.networks?.[this.network]
 
-        if (!providerUrl) throw new Error('Provider URL is missing from environment variables');
+        if (!hardhatNetworkConfig) {
+            throw new Error(`Network configuration not found for ${this.network}`);
+        }
 
-        this.provider = new ethers.JsonRpcProvider(providerUrl);
+        // @ts-ignore
+        if (!hardhatNetworkConfig.url) {
+            throw new Error('Provider URL is missing.');
+        }
 
+        // @ts-ignore
+        this.provider = new ethers.JsonRpcProvider(hardhatNetworkConfig.url);
+
+        if (!hardhatNetworkConfig.accounts || !hardhatNetworkConfig.accounts[0]) {
+            throw new Error('Account is missing from network configuration');
+        }
+
+        this.signer = new ethers.Wallet(hardhatNetworkConfig.accounts[0], this.provider);
 
         this.contractAddress = process.env.CONTRACT_ADDRESS || '';
         if (!ethers.isAddress(this.contractAddress)) {
             throw new Error(`Invalid contract address: ${this.contractAddress}`);
         }
 
-        const contractAbiStr = process.env.CONTRACT_ABI || '';
-        try {
-            this.contractAbi = JSON.parse(contractAbiStr);
-        } catch (error) {
-            throw new Error('Error parsing contract ABI from environment variables');
-        }
+        this.factoryAbi = factoryAbi
+        this.depositAbi = depositAbi
     }
 }
 

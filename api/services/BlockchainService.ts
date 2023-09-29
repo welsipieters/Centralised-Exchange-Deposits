@@ -1,20 +1,47 @@
 import { ethers } from 'ethers';
-import {IBlockchainService} from "../interfaces";
+import {IBlockchainService, IDatabaseService} from "../interfaces";
 import {injectable} from "inversify";
 import blockchainConfig from "../blockchainConfig";
+import types from "../types";
+import {container} from "../inversify.config";
 
 @injectable()
 export class BlockchainService implements IBlockchainService {
-    private readonly provider: ethers.JsonRpcProvider;
     private contract: ethers.Contract;
+    private databaseService = container.get<IDatabaseService>(types.Database);
 
     constructor() {
-        this.provider = blockchainConfig.provider;
-        this.contract = new ethers.Contract(blockchainConfig.contractAddress, blockchainConfig.contractAbi, this.provider);
+        this.contract = new ethers.Contract(blockchainConfig.contractAddress, blockchainConfig.factoryAbi, blockchainConfig.signer);
+    }
+    async generateAddresses(count: number): Promise<string> {
+        const tx = await this.contract.deployMultipleContracts(count);
+
+        // Process receipt asynchronously
+        tx.wait().then(receipt => this.processReceipt(receipt, count))
+            .then(deployedAddresses => deployedAddresses.map(address => this.databaseService.saveAddress(address)))
+            .then(saveAddressPromises => Promise.all(saveAddressPromises))
+            .catch(error => console.error('Error processing receipt', error));
+
+        // Return transaction hash immediately
+        return tx.hash;
     }
 
-    async generateAddresses(count: number): Promise<string[]> {
-        // Call the contract's method to generate addresses
-        return await this.contract.deployMultipleContracts(count);
+    private async processReceipt(receipt: ethers.TransactionReceipt, count: number): Promise<string[]> {
+        const deployedAddresses: string[] = [];
+
+        if (receipt.logs) {
+            for (const log of receipt.logs) {
+                if (log.fragment.name === 'ContractDeployed') {
+                    const address = log.args && log.args[0];
+                    if (address) deployedAddresses.push(address);
+                }
+            }
+        }
+
+        if (deployedAddresses.length !== count) {
+            throw new Error('Mismatch in number of deployed addresses and expected count');
+        }
+
+        return deployedAddresses;
     }
 }

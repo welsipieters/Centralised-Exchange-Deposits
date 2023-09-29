@@ -1,19 +1,27 @@
-import 'reflect-metadata'; // Required for inversify
+import 'reflect-metadata';
 import express from 'express';
-import { initializeDatabase } from './database'; // If you have this function to initialize DB
+import { initializeDatabase } from './database';
 import './controllers/DepositAddressController';
 import {container} from "./inversify.config";
-import {DepositAddressRoutes} from "./controllers/DepositAddressController"; // This import is crucial as it registers the controller
-
+import {DepositAddressRoutes} from "./controllers/DepositAddressController";
+import 'dotenv/config';
 
 // Create server
-const app = express();
 
-app.use('/deposit-address', DepositAddressRoutes(container));
+const main = async () => {
+    await initializeDatabase();
+    const app = express();
 
-const port = 3000;
+    app.use('/deposit-addresses', DepositAddressRoutes(container));
 
-app.listen(port, async () => {
-    console.log(`Server started on port ${port}`);
-    await initializeDatabase(); // If you have this function to initialize DB
-});
+    const port = process.env.APP_PORT || 3000;
+
+    app.listen(port, async () => {
+        console.log(`Server started on port ${port}`);
+
+    });
+};
+
+main().catch((error) => {
+    console.error(error);
+})

@@ -1,7 +1,8 @@
 import { getRepository, Repository } from 'typeorm';
-import { DepositAddress, AddressStatus } from '../models/DepositAddress';
+import { DepositAddress } from '../models/DepositAddress';
 import { injectable } from 'inversify';
 import {IDatabaseService} from "../interfaces";
+import {AddressStatus} from "../models/enums/AddressStatus";
 
 @injectable()
 export class DatabaseService implements IDatabaseService{
@@ -20,7 +21,7 @@ export class DatabaseService implements IDatabaseService{
         const depositAddress = new DepositAddress();
         depositAddress.deposit_address = address;
         depositAddress.status = AddressStatus.UNUSED;
-
+        console.log('Saving address', depositAddress);
         return await this.depositAddressRepository.save(depositAddress);
     }
 
@@ -31,7 +32,7 @@ export class DatabaseService implements IDatabaseService{
     async fetchAndMarkUnusedAddress(): Promise<DepositAddress | null> {
         const unusedAddress = await this.depositAddressRepository.findOne({
             where: { status: AddressStatus.UNUSED },
-            order: { createdAt: 'ASC' }
+            order: { created_at: 'ASC' }
         });
 
         if (!unusedAddress) {
@@ -48,8 +49,8 @@ export class DatabaseService implements IDatabaseService{
      * Finds a deposit address by its ID.
      * @param id The ID of the deposit address.
      */
-    async findAddressById(id: number): Promise<DepositAddress | undefined> {
-        return await this.depositAddressRepository.findOne(id);
+    async findAddressById(id: number): Promise<DepositAddress | null> {
+        return await this.depositAddressRepository.findOne({where: {id: id}});
     }
 
     /**
