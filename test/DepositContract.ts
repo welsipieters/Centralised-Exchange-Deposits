@@ -13,11 +13,19 @@ describe("DepositContract", function () {
 
         [owner, addr1, coldStorage] = await ethers.getSigners();
 
-        // Deploy DepositAddressFactory and DepositContract here.
-        factory = await DepositAddressFactory.deploy(coldStorage.address);
 
-        // Assume deployNewContract deploys a new DepositContract
-        const deployTx = await factory.deployNewContract(/* params */);
+        const depositContractInstance = await DepositContract.deploy();
+        await depositContractInstance.waitForDeployment();
+
+        // Deploy DepositAddressFactory and DepositContract here.
+        factory = await DepositAddressFactory.deploy(coldStorage.address, depositContractInstance.target);
+        await factory.waitForDeployment();
+
+        // Initialize the DepositContract with the address of the DepositAddressFactory
+        await depositContractInstance.initialize(factory.target);
+
+        // Assume deployNewContract deploys a new DepositContract clone
+        const deployTx = await factory.deployNewContract();
         const receipt = await deployTx.wait();
 
         // Get the deployed DepositContract address from the event.
@@ -25,6 +33,7 @@ describe("DepositContract", function () {
         const deployedAddress = event.args?.[0];
 
         depositContract = await DepositContract.attach(deployedAddress);
+        await depositContract.initialize(factory.target);
     });
 
     beforeEach(async () => {
@@ -34,6 +43,18 @@ describe("DepositContract", function () {
     describe("Deployment", function () {
         it("Should set the right factory", async function () {
             expect(await depositContract.factory()).to.equal(factory.target);
+        });
+
+
+        it("Should be a clone of the logic contract", async function () {
+            const logicContractAddress = await factory.logicContract();
+            const logicContract = DepositContract.attach(logicContractAddress);
+
+
+            const logicFactoryAddress = await logicContract.factory();
+            const cloneFactoryAddress = await depositContract.factory();
+            expect(cloneFactoryAddress).to.equal(logicFactoryAddress);
+
         });
     });
 

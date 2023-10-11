@@ -1,22 +1,22 @@
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Importing required interfaces and contracts from OpenZeppelin and local files
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "./DepositAddressFactory.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
+import "./IDepositAddressFactory.sol";
+import "hardhat/console.sol";
 /**
  * @title DepositContract
  * @notice This contract is designed to allow for secure deposits, management,
  * and transfer of ERC20 tokens, ERC721 tokens, and Ether to a designated cold storage.
  */
-contract DepositContract {
+contract DepositContract is Initializable {
 
     // Reference to the factory contract that deployed this contract
-    DepositAddressFactory public factory;
+    IDepositAddressFactory public factory;
 
     // Modifier to ensure that the function is only callable by the factory's designated admins
     modifier onlyFactoryAdmin() {
@@ -30,9 +30,9 @@ contract DepositContract {
         _;
     }
 
-    // Constructor to initialize the factory reference
-    constructor(address _factory) {
-        factory = DepositAddressFactory(_factory);
+    function initialize(address _factory) public initializer {
+        factory = IDepositAddressFactory(_factory);
+        console.log("DepositContract initialized");
     }
 
     /**

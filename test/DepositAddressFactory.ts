@@ -15,10 +15,18 @@ describe("DepositAddressFactory", function () {
     });
 
     beforeEach(async () => {
-        // Deploy a new DepositAddressFactory contract for each test
-        factory = await DepositAddressFactory.deploy(coldStorage.address);
-    });
+        // Deploy DepositContract (logic contract) without initializing
+        const DepositContract = await ethers.getContractFactory("DepositContract");
+        const depositContract = await DepositContract.deploy();
+        await depositContract.waitForDeployment();
 
+        // Deploy a new DepositAddressFactory contract for each test.
+        factory = await DepositAddressFactory.deploy(coldStorage.address, depositContract.target);
+        await factory.waitForDeployment();
+
+        // Initialize the DepositContract with the address of the DepositAddressFactory
+        await depositContract.initialize(factory.target);
+    });
     describe("Contract Deployment and Initialization", function () {
         it("Should deploy the contract correctly", async function () {
             expect(factory.target).to.properAddress; // Check if the address is valid
@@ -35,9 +43,13 @@ describe("DepositAddressFactory", function () {
         });
 
         it("Should revert if initialized with an invalid cold storage address", async function () {
-            // Attempt to deploy the contract with an invalid address (0x0) and expect it to be reverted
-            await expect(DepositAddressFactory.deploy("0x0000000000000000000000000000000000000000"))
+            await expect(DepositAddressFactory.deploy("0x0000000000000000000000000000000000000000", "0x000000000000000000000000000000000000dEaD"))
                 .to.be.revertedWith("Invalid cold storage address");
+        });
+
+        it("Should revert if initialized with an invalid logic contract address", async function () {
+            await expect(DepositAddressFactory.deploy("0x000000000000000000000000000000000000dEaD", "0x0000000000000000000000000000000000000000"))
+                .to.be.revertedWith("Invalid logic contract address");
         });
     });
 

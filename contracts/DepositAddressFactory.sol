@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Importing required contracts and interfaces from OpenZeppelin and local files
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/proxy/Clones.sol";
+
 import "./DepositContract.sol";
+import "./IDepositAddressFactory.sol";
 
 /**
  * @title DepositAddressFactory
@@ -13,10 +15,12 @@ import "./DepositContract.sol";
  * It also manages administrative tasks like pausing/unpausing operations, 
  * updating cold storage addresses, and maintaining a list of contract admins.
  */
-contract DepositAddressFactory is Pausable {
+contract DepositAddressFactory is Pausable, IDepositAddressFactory  {
 
     // Address where assets are stored securely
     address public coldStorage;
+
+    address public logicContract;
 
     // Mapping to track contracts deployed by this factory
     mapping(address => bool) public deployedContracts;
@@ -36,35 +40,28 @@ contract DepositAddressFactory is Pausable {
      * @dev Constructor to initialize the cold storage address and set the deployer as an admin.
      * @param _coldStorage Address of the cold storage.
      */
-    constructor(address _coldStorage) {
+    constructor(address _coldStorage, address _logicContract) {
         require(_coldStorage != address(0), "Invalid cold storage address");
+        require(_logicContract != address(0), "Invalid logic contract address");
         coldStorage = _coldStorage;
         admins[msg.sender] = true;
+        logicContract = _logicContract;
     }
 
-    /**
-     * @notice Deploys a new instance of the DepositContract.
-     * @return Address of the newly deployed contract.
-     */
     function deployNewContract() external onlyAdmin whenNotPaused returns(address) {
-        DepositContract newContract = new DepositContract(address(this));
-        deployedContracts[address(newContract)] = true;
-        emit ContractDeployed(address(newContract));
-        return address(newContract);
+        address clone = Clones.clone(logicContract);
+        deployedContracts[clone] = true;
+        emit ContractDeployed(clone);
+        return clone;
     }
 
-    /**
-     * @notice Deploys multiple instances of the DepositContract.
-     * @param count Number of contracts to deploy.
-     * @return An array of addresses of the newly deployed contracts.
-     */
     function deployMultipleContracts(uint256 count) external onlyAdmin whenNotPaused returns(address[] memory) {
         address[] memory deployedAddresses = new address[](count);
         for (uint256 i = 0; i < count; i++) {
-            DepositContract newContract = new DepositContract(address(this));
-            deployedContracts[address(newContract)] = true;
-            deployedAddresses[i] = address(newContract);
-            emit ContractDeployed(address(newContract));
+            address clone = Clones.clone(logicContract);
+            deployedContracts[clone] = true;
+            deployedAddresses[i] = clone;
+            emit ContractDeployed(clone);
         }
         return deployedAddresses;
     }
@@ -104,8 +101,13 @@ contract DepositAddressFactory is Pausable {
         coldStorage = _coldStorage;
     }
 
-    /**
-     * @notice Pauses all contract operations.
+    function paused() override(Pausable, IDepositAddressFactory) public view returns (bool) {
+        return Pausable.paused();
+    }
+
+
+/**
+ * @notice Pauses all contract operations.
      */
     function pauseContract() external onlyAdmin {
         _pause();
