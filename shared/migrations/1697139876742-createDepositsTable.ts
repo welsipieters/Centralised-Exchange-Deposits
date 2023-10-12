@@ -1,14 +1,3 @@
-import { MigrationInterface, QueryRunner } from "typeorm"
-
-export class CreateDepositsTable1697139876742 implements MigrationInterface {
-
-    public async up(queryRunner: QueryRunner): Promise<void> {
-    }
-
-    public async down(queryRunner: QueryRunner): Promise<void> {
-    }
-
-}
 import { MigrationInterface, QueryRunner, Table } from "typeorm";
 
 export class CreateDepositsTable1697139876742 implements MigrationInterface {
