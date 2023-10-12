@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import hardhatConfig from "../hardhat.config";
 import factoryAbi from "../abi/factory.json";
 import depositAbi from "../abi/deposit.json";
+import erc20Abi from "../abi/erc20.json";
 export class BlockchainConfig {
     public readonly network: string;
     public readonly provider: ethers.JsonRpcProvider;
@@ -9,6 +10,7 @@ export class BlockchainConfig {
     public readonly contractAddress: string;
     public readonly factoryAbi: any;
     public readonly depositAbi: any;
+    public readonly erc20Abi: any;
 
     constructor() {
         this.network = process.env.BLOCKCHAIN_NETWORK || 'hardhat';
@@ -39,6 +41,7 @@ export class BlockchainConfig {
 
         this.factoryAbi = factoryAbi
         this.depositAbi = depositAbi
+        this.erc20Abi = erc20Abi
     }
 }
 

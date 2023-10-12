@@ -8,11 +8,14 @@ export class Sweep {
     @Column({ type: 'varchar', length: 42 })
     address: string;
 
-    @Column('decimal', { precision: 36, scale: 18 })
+    @Column('decimal', { precision: 36 })
     amount: string;
 
     @Column({ type: 'varchar', length: 66 })
     transactionHash: string;
+
+    @Column({ type: 'varchar', length: 255 })
+    token_name: string;
 
     @Column({ type: 'varchar', length: 42, nullable: true })
     tokenContractAddress: string;
@@ -21,5 +24,8 @@ export class Sweep {
     created_at: Date;
 
     @Column({ type: 'bigint', nullable: true })
-    block: number;
+    block: bigint;
+
+    @Column({ type: 'int', default: 0 })
+    core_notifications: number;
 }

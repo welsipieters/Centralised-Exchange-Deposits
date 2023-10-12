@@ -49,8 +49,10 @@ contract DepositAddressFactory is Pausable, IDepositAddressFactory  {
     }
 
     function deployNewContract() external onlyAdmin whenNotPaused returns(address) {
-        address clone = Clones.clone(logicContract);
+        address payable clone = payable(Clones.clone(logicContract));
+
         deployedContracts[clone] = true;
+        DepositContract(clone).initialize(address(this));
         emit ContractDeployed(clone);
         return clone;
     }
@@ -58,9 +60,11 @@ contract DepositAddressFactory is Pausable, IDepositAddressFactory  {
     function deployMultipleContracts(uint256 count) external onlyAdmin whenNotPaused returns(address[] memory) {
         address[] memory deployedAddresses = new address[](count);
         for (uint256 i = 0; i < count; i++) {
-            address clone = Clones.clone(logicContract);
+            address payable clone = payable(Clones.clone(logicContract));
+
             deployedContracts[clone] = true;
             deployedAddresses[i] = clone;
+            DepositContract(clone).initialize(address(this));
             emit ContractDeployed(clone);
         }
         return deployedAddresses;

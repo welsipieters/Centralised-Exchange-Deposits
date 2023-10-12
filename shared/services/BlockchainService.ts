@@ -15,10 +15,10 @@ export class BlockchainService implements IBlockchainService {
     }
     async generateAddresses(count: number): Promise<string> {
         const tx = await this.contract.deployMultipleContracts(count);
-
+        const currentBlockNumber = await blockchainConfig.provider.getBlockNumber();
         // Process receipt asynchronously
         tx.wait().then(receipt => this.processReceipt(receipt, count))
-            .then(deployedAddresses => deployedAddresses.map(address => this.databaseService.saveAddress(address)))
+            .then(deployedAddresses => deployedAddresses.map(address => this.databaseService.saveAddress(address, currentBlockNumber)))
             .then(saveAddressPromises => Promise.all(saveAddressPromises))
             .catch(error => console.error('Error processing receipt', error));
 
@@ -31,8 +31,9 @@ export class BlockchainService implements IBlockchainService {
 
         if (receipt.logs) {
             for (const log of receipt.logs) {
+                console.log('Log:', log)
                 // @ts-ignore
-                if (log.fragment.name === 'ContractDeployed') {
+                if (log.fragment && log.fragment.name === 'ContractDeployed') {
                     // @ts-ignore
                     const address = log.args && log.args[0];
                     if (address) deployedAddresses.push(address);

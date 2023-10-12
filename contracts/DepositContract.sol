@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 import "./IDepositAddressFactory.sol";
-import "hardhat/console.sol";
 /**
  * @title DepositContract
  * @notice This contract is designed to allow for secure deposits, management,
@@ -15,36 +14,20 @@ import "hardhat/console.sol";
  */
 contract DepositContract is Initializable {
 
-    // Reference to the factory contract that deployed this contract
-    IDepositAddressFactory public factory;
-
-    // Modifier to ensure that the function is only callable by the factory's designated admins
-    modifier onlyFactoryAdmin() {
-        require(factory.admins(msg.sender), "Access restricted to factory admins");
-        _;
-    }
-
-    // Modifier to ensure that the function is only callable when the factory is not paused
-    modifier ifFactoryNotPaused() {
-        require(!factory.paused(), "Factory operations are paused");
-        _;
-    }
+    address public coldStorage;
 
     function initialize(address _factory) public initializer {
-        factory = IDepositAddressFactory(_factory);
-        console.log("DepositContract initialized");
+        coldStorage = IDepositAddressFactory(_factory).coldStorage();
     }
 
     /**
      * @notice Transfers ERC20 tokens from this contract to the cold storage address.
      * @param tokenAddress The address of the ERC20 token to be transferred.
      */
-    function sweepERC20Token(address tokenAddress) external onlyFactoryAdmin ifFactoryNotPaused {
+    function sweepERC20Token(address tokenAddress, uint256 amount) external {
         IERC20 token = IERC20(tokenAddress);
-        address coldStorage = factory.getColdStorageAddress();
-        uint256 tokenBalance = token.balanceOf(address(this));
-        require(tokenBalance > 0, "No tokens available for transfer");
-        require(token.transfer(coldStorage, tokenBalance), "Transfer of ERC20 tokens failed");
+
+        require(token.transfer(coldStorage, amount), "Transfer of ERC20 tokens failed");
     }
 
     /**
@@ -52,9 +35,9 @@ contract DepositContract is Initializable {
      * @param nftAddress The address of the ERC721 token contract.
      * @param tokenIds The IDs of the ERC721 tokens to be transferred.
      */
-    function sweepERC721Tokens(address nftAddress, uint256[] calldata tokenIds) external onlyFactoryAdmin ifFactoryNotPaused {
+    function sweepERC721Tokens(address nftAddress, uint256[] calldata tokenIds) external {
         IERC721 nft = IERC721(nftAddress);
-        address coldStorage = factory.getColdStorageAddress();
+
         for (uint256 i = 0; i < tokenIds.length; i++) {
             nft.safeTransferFrom(address(this), coldStorage, tokenIds[i]);
         }
@@ -63,13 +46,13 @@ contract DepositContract is Initializable {
     /**
      * @notice Transfers the Ether held in this contract to the cold storage address.
      */
-    function sweepEther() external onlyFactoryAdmin ifFactoryNotPaused {
+    function sweepEther() external {
         uint256 ethBalance = address(this).balance;
         require(ethBalance > 0, "No Ether available for transfer");
-        address coldStorage = factory.getColdStorageAddress();
+
         payable(coldStorage).transfer(ethBalance);
     }
 
     // Fallback function to allow the contract to receive Ether transfers
-    receive() external payable ifFactoryNotPaused {}
+    receive() external payable {}
 }

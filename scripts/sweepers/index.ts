@@ -1,10 +1,23 @@
-import { AddressMonitor } from './AddressMonitor';
-import { loadAddressesFromDB } from './Database';
+import cron from 'node-cron';
+import 'reflect-metadata';
 import { WorkerPool } from './WorkerPool';
+import {initializeDatabase} from "../../shared/database";
+import {container} from "../../api/inversify.config";
+import {IDatabaseService} from "../../api/interfaces";
+import types from "../../api/types";
 
 const WORKER_COUNT = 10;
+let isDatabaseInitialized = false;
+
 async function main() {
-    const addresses = await loadAddressesFromDB();
+    if (!isDatabaseInitialized) {
+        await initializeDatabase();
+        isDatabaseInitialized = true;
+    }
+
+    const databaseService = container.get<IDatabaseService>(types.Database);
+
+    const addresses = await databaseService.fetchAllInUseAddresses();
 
     const workerPool = new WorkerPool(WORKER_COUNT); // for example, 10 workers
 
@@ -12,3 +25,8 @@ async function main() {
 }
 
 main().catch(console.error);
+
+
+cron.schedule('*/1 * * * *', () => {
+    main().catch(console.error);
+});

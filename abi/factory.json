@@ -5,6 +5,11 @@
         "internalType": "address",
         "name": "_coldStorage",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_logicContract",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -148,6 +153,19 @@
   {
     "inputs": [],
     "name": "getColdStorageAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "logicContract",
     "outputs": [
       {
         "internalType": "address",

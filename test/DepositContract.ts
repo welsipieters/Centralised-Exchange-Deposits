@@ -33,7 +33,6 @@ describe("DepositContract", function () {
         const deployedAddress = event.args?.[0];
 
         depositContract = await DepositContract.attach(deployedAddress);
-        await depositContract.initialize(factory.target);
     });
 
     beforeEach(async () => {
