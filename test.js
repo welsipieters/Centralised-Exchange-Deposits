@@ -97,7 +97,7 @@ async function main() {
     const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, blockchainConfig.signer);
 
     const tokenAddress = '0xdac17f958d2ee523a2206206994597c13d831ec7'; // Replace with the ERC20 token's address you want to sweep
-    const amount = ethers.utils.parseUnits('5', 18); // Replace '10' with the amount you want to sweep, and '18' with the token's decimal places
+    const amount = ethers.parseUnits('5', 6);
 
     const tx = await contract.sweepERC20Token(tokenAddress, amount);
     console.log(`Transaction hash: ${tx.hash}`);
