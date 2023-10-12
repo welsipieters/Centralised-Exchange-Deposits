@@ -18,6 +18,10 @@ const config: HardhatUserConfig = {
         url: `https://eth.nownodes.io/${process.env.NOWNODES_KEY}`,
         accounts: [`0x${process.env.PRIVATE_KEY}`],
     },
+    mainnet2: {
+        url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+        accounts: [`0x${process.env.PRIVATE_KEY}`],
+    },
     sepolia: {
         url: `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
         accounts: [`0x${process.env.PRIVATE_KEY}`],
