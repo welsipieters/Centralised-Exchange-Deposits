@@ -51,6 +51,7 @@
     "verify": "hardhat verify",
     "serve": "hardhat run api/index.ts",
     "watch": "hardhat run scripts/sweepers/index.ts",
+    "sweep": "hardhat run test.js",
     "start": "concurrently \"npm:serve\" \"npm:watch\""
   }
 }
