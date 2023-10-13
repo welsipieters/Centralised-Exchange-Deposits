@@ -18,6 +18,7 @@
     "node-cron": "^3.0.2",
     "node-fetch": "^3.3.2",
     "reflect-metadata": "^0.1.13",
+    "start": "^5.1.0",
     "typeorm": "^0.3.17"
   },
   "devDependencies": {

@@ -5,6 +5,7 @@ import {container} from "../../api/inversify.config";
 import {IDatabaseService} from "../../api/interfaces";
 import types from "../../api/types";
 import {Worker} from 'worker_threads';
+import {Deposit} from "../../shared/models/Deposit";
 export interface TokenBalance {
     contractAddress: string;
     amount: bigint;
@@ -14,7 +15,7 @@ export interface BalanceInfo {
     address: string;
     hasEth: boolean;
     ethAmount: bigint;
-    tokens: TokenBalance[];
+    tokens: Deposit[];
 }
 
 export class AddressMonitor {
@@ -77,7 +78,7 @@ export class AddressMonitor {
             let hasNewEthBalance = false;
             let newEthAmount: bigint = BigInt(0);
             let receivedTokens: TokenBalance[] = [];
-
+            let tokenDeposits: Deposit[] = [];
             // Check ETH balance for the address
             const ethBalance = await this.provider.getBalance(address.deposit_address, currentBlockNumber);
             console.log(`ETH balance for ${address.deposit_address}: ${ethBalance}`);
@@ -91,11 +92,28 @@ export class AddressMonitor {
             for (const log of addressLogs) {
                 const tokenContractAddress = log.address;
                 const logInterface = new ethers.Interface(['event Transfer(address indexed from, address indexed to, uint256 value)']);
-                // @ts-ignore
                 const decodedLog = logInterface.parseLog(log);
-                // @ts-ignore
                 const amount = decodedLog.args.value;
                 receivedTokens.push({ contractAddress: tokenContractAddress, amount });
+
+                const tokenContract = new ethers.Contract(tokenContractAddress, blockchainConfig.erc20Abi, this.provider);
+                const tokenName = await tokenContract.symbol();
+                const tokenDecimals = await tokenContract.decimals();
+
+                const existingDeposit = await this.databaseService.findDepositByHash(log.transactionHash);
+                if (!existingDeposit) {
+                    // Create a deposit record for ERC20 token
+                    const tokenDeposit = new Deposit();
+                    tokenDeposit.hash = log.transactionHash;
+                    tokenDeposit.blockNumber = log.blockNumber;
+                    tokenDeposit.fromAddress = decodedLog.args.from;
+                    tokenDeposit.toAddress = decodedLog.args.to;
+                    tokenDeposit.currencyAddress = tokenContractAddress;
+                    tokenDeposit.currencyName = tokenName;
+                    tokenDeposit.amount = ethers.formatUnits(amount, tokenDecimals);
+                    tokenDeposit.amount_real = amount;
+                    await this.databaseService.insertDeposit(tokenDeposit);
+                }
             }
 
             // Construct and push BalanceInfo for this address
@@ -103,7 +121,7 @@ export class AddressMonitor {
                 address: address.deposit_address,
                 hasEth: hasNewEthBalance,
                 ethAmount: newEthAmount,
-                tokens: receivedTokens,
+                tokens: await this.databaseService.findUnprocessedDepositsByToAddress(address.deposit_address),
             });
         }
 

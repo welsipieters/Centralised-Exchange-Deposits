@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./IDepositAddressFactory.sol";
 /**
  * @title DepositContract
@@ -13,6 +13,7 @@ import "./IDepositAddressFactory.sol";
  * and transfer of ERC20 tokens, ERC721 tokens, and Ether to a designated cold storage.
  */
 contract DepositContract is Initializable {
+    using SafeERC20 for IERC20;
 
     address public coldStorage;
 
@@ -26,8 +27,7 @@ contract DepositContract is Initializable {
      */
     function sweepERC20Token(address tokenAddress, uint256 amount) external {
         IERC20 token = IERC20(tokenAddress);
-
-        require(token.transfer(coldStorage, amount), "Transfer of ERC20 tokens failed");
+        token.safeTransfer(coldStorage, amount);
     }
 
     /**

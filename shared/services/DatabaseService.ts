@@ -4,15 +4,18 @@ import {injectable} from 'inversify';
 import {IDatabaseService} from "../../api/interfaces";
 import {AddressStatus} from "../models/enums/AddressStatus";
 import {Sweep} from "../models/Sweep";
+import {Deposit} from "../models/Deposit";
 
 @injectable()
 export class DatabaseService implements IDatabaseService {
 
     private depositAddressRepository: Repository<DepositAddress>;
+    private depositRepository: Repository<Deposit>;
     private sweepRepository: Repository<Sweep>;
 
     constructor() {
         this.depositAddressRepository = getRepository(DepositAddress);
+        this.depositRepository = getRepository(Deposit);
         this.sweepRepository = getRepository(Sweep);
     }
 
@@ -26,8 +29,8 @@ export class DatabaseService implements IDatabaseService {
         depositAddress.deposit_address = address;
         depositAddress.status = AddressStatus.UNUSED;
         depositAddress.last_seen_at_block = block;
-        console.log('Saving address', depositAddress);
-        return await this.depositAddressRepository.save(depositAddress);
+
+        return this.depositAddressRepository.save(depositAddress);
     }
 
     /**
@@ -56,6 +59,16 @@ export class DatabaseService implements IDatabaseService {
      */
     async findAddressById(id: number): Promise<DepositAddress | null> {
         return await this.depositAddressRepository.findOne({where: {id: id}});
+    }
+
+
+    async findUnprocessedDepositsByToAddress(toAddress: string): Promise<Deposit[]> {
+        return await this.depositRepository.find({
+            where: {
+                toAddress: toAddress,
+                processed: false
+            }
+        });
     }
 
     /**
@@ -88,6 +101,11 @@ export class DatabaseService implements IDatabaseService {
         }
     }
 
+    async updateProcessedStatusByHash(transactionHash: string, processed: boolean): Promise<void> {
+        await this.depositRepository.update({ hash: transactionHash }, { processed: processed });
+    }
+
+
     async updateMultipleSweepNotificationCounts(sweepIds: number[]): Promise<void> {
         await this.sweepRepository
             .createQueryBuilder()
@@ -99,7 +117,9 @@ export class DatabaseService implements IDatabaseService {
             .execute();
     }
 
-
+    async findDepositByHash(hash: string): Promise<Deposit | null> {
+        return await this.depositRepository.findOne({where: {hash: hash}});
+    }
     async fetchAllInUseAddresses(): Promise<DepositAddress[]> {
         return await this.depositAddressRepository.find({
             where: {status: AddressStatus.IN_USE}
@@ -113,5 +133,11 @@ export class DatabaseService implements IDatabaseService {
 
         await this.depositAddressRepository.save(depositAddresses);
     }
+
+    async insertDeposit(depositData: Deposit): Promise<Deposit> {
+
+        return await this.depositRepository.save(depositData);
+    }
+
 
 }

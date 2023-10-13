@@ -7,6 +7,7 @@ module.exports = {
     "username": process.env.DB_USER || "root",
     "password": process.env.DB_PASS || "",
     "database": process.env.DB_NAME || "test",
+    "charset": "utf8mb4",
     "synchronize": false,
     "logging": false,
     "entities": ["shared/models/**/*.ts"],

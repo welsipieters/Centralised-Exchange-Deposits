@@ -7,9 +7,9 @@ async function main() {
 
     // Validate cold storage address
     const coldStorageAddress = process.env.COLD_STORAGE_ADDRESS;
-    if (!ethers.isAddress(coldStorageAddress)) {
-        throw new Error(`Invalid cold storage address: ${coldStorageAddress}`);
-    }
+    // if (!ethers.isAddress(coldStorageAddress)) {
+    //     throw new Error(`Invalid cold storage address: ${coldStorageAddress}`);
+    // }
 
     // Deploy DepositContract (logic contract) without initializing the factory address
     const DepositContract = await ethers.getContractFactory("DepositContract");

@@ -93,8 +93,11 @@ const ABI = [
 const CONTRACT_ADDRESS = '0x88e24bB3a5EcE2a8f92CfA5986DF87182513f465'; // Replace with your contract's address
 
 async function main() {
+    const provider = new ethers.JsonRpcProvider(`https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`);
+    const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, blockchainConfig.signer);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, wallet);
+
 
     const tokenAddress = '0xdac17f958d2ee523a2206206994597c13d831ec7'; // Replace with the ERC20 token's address you want to sweep
     const amount = ethers.parseUnits('5', 6);

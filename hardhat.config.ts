@@ -22,6 +22,18 @@ const config: HardhatUserConfig = {
         url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
         accounts: [`0x${process.env.PRIVATE_KEY}`],
     },
+      trx: {
+          url: `https://trx.nownodes.io/${process.env.NOWNODES_KEY}`,
+          accounts: [`0x${process.env.PRIVATE_KEY}`],
+      },
+      mumbai: {
+          url: `https://polygon-mumbai.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+          accounts: [`0x${process.env.PRIVATE_KEY}`],
+      },
+      polygon: {
+          url: `https://polygon-mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+          accounts: [`0x${process.env.PRIVATE_KEY}`],
+      },
     sepolia: {
         url: `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
         accounts: [`0x${process.env.PRIVATE_KEY}`],
