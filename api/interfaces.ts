@@ -7,7 +7,7 @@ export interface IBlockchainService {
 }
 
 export interface IDatabaseService {
-    updateProcessedStatusByHash(transactionHash: string, processed: boolean): Promise<void>
+    updateProcessedStatusByHash(transactionHash: string, processTx: string, processed: boolean): Promise<void>
     findUnprocessedDepositsByToAddress(toAddress: string): Promise<Deposit[]>
     findDepositByHash(hash: string): Promise<Deposit | null>;
     saveAddress(address: string, block: number): Promise<DepositAddress>;

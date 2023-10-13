@@ -52,23 +52,29 @@ parentPort.on('message', async (message: WorkerMessage) => {
             const tokenDecimals = await tokenContract.decimals();
 
             const adjustedTokenBalance = ethers.formatUnits(parseFloat(tokenBalance.amount_real), tokenDecimals);
-
-
             // Call sweepToken on the deposit contract for each token with a new balance
             const sweepTx = await depositContract.sweepERC20Token(tokenBalance.currencyAddress, parseFloat(tokenBalance.amount_real));
-            await sweepTx.wait(MIN_CONFIRMATIONS); // Wait for the transaction to be mined
-            console.log(`Swept ${tokenBalance.amount} from ${tokenBalance.currencyAddress}`);
+            await databaseService.updateProcessedStatusByHash(tokenBalance.hash, sweepTx.hash, true);
 
-            const sweep = new Sweep();
-            sweep.address = balanceInfo.address;
-            sweep.tokenContractAddress = tokenBalance.currencyAddress;
-            sweep.amount = tokenBalance.amount
-            sweep.transactionHash = sweepTx.hash;
-            sweep.token_name = tokenSymbol;
-            sweep.block = BigInt(currentBlockNumber);
+            try {
+                await sweepTx.wait(MIN_CONFIRMATIONS); // Wait for the transaction to be mined
+                console.log(`Swept ${tokenBalance.amount} from ${tokenBalance.currencyAddress}`);
 
-            await sweepRepository.save(sweep);
-            await databaseService.updateProcessedStatusByHash(tokenBalance.hash, true);
+                const sweep = new Sweep();
+                sweep.address = balanceInfo.address;
+                sweep.tokenContractAddress = tokenBalance.currencyAddress;
+                sweep.amount = tokenBalance.amount
+                sweep.transactionHash = sweepTx.hash;
+                sweep.token_name = tokenSymbol;
+                sweep.block = BigInt(currentBlockNumber);
+
+                await sweepRepository.save(sweep);
+            } catch (e) {
+                await databaseService.updateProcessedStatusByHash(tokenBalance.hash, sweepTx.hash, false);
+            }
+
+
+
         }
 
         // If balanceInfo.hasEth is true, perform sweep action for Ether

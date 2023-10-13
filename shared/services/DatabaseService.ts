@@ -101,8 +101,8 @@ export class DatabaseService implements IDatabaseService {
         }
     }
 
-    async updateProcessedStatusByHash(transactionHash: string, processed: boolean): Promise<void> {
-        await this.depositRepository.update({ hash: transactionHash }, { processed: processed });
+    async updateProcessedStatusByHash(transactionHash: string, processTx: string, processed: boolean): Promise<void> {
+        await this.depositRepository.update({ hash: transactionHash }, { processed: processed, process_tx: processTx });
     }
 
 

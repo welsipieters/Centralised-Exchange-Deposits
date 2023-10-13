@@ -6,7 +6,7 @@ import {
 } from 'typeorm';
 
 @Entity('deposits')
-@Unique([   'hash'])
+@Unique([   'hash', 'process_tx'])
 export class Deposit {
 
     @PrimaryGeneratedColumn()
@@ -30,6 +30,9 @@ export class Deposit {
 
     @Column('varchar', { name: 'hash' })
     hash: string;
+
+    @Column('varchar', { name: 'process_tx' })
+    process_tx: string;
 
     @Column({ type: 'boolean', default: false })
     processed: boolean;
