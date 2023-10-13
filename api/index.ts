@@ -23,7 +23,7 @@ const config = {
 };
 
 cron.schedule('*/5 * * * *', () => postSweepTransactions(config));
-cron.schedule('*/1 * * * *', () => fetchAddressesFromExternalAPI(config));
+cron.schedule('*/10 * * * * *', () => fetchAddressesFromExternalAPI(config));
 
 
 const main = async () => {

@@ -12,10 +12,21 @@ const postSweepTransactions = async (config) => {
 
     const deposits: any[] = [];
 
+    let network = 'ethereum'
+    switch (process.env.BLOCKCHAIN_NETWORK) {
+        case 'polygon':
+            network = 'polygon'
+            break;
+
+        default:
+            network = 'ethereum'
+            break;
+    }
+
     for (const sweep of sweepsToNotify) {
         deposits.push({
             'address': sweep.address,
-            'network': 'ethereum',
+            'network': network,
             'currency': sweep.token_name,
             'txid': sweep.transactionHash,
             'amount': parseFloat(sweep.amount).toString(),  // assuming amount is a BigNumber or similar
