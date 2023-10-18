@@ -51,9 +51,8 @@ parentPort.on('message', async (message: WorkerMessage) => {
             const tokenSymbol = await tokenContract.symbol();
             const tokenDecimals = await tokenContract.decimals();
 
-            const adjustedTokenBalance = ethers.formatUnits(parseFloat(tokenBalance.amount_real), tokenDecimals);
             // Call sweepToken on the deposit contract for each token with a new balance
-            const sweepTx = await depositContract.sweepERC20Token(tokenBalance.currencyAddress, parseFloat(tokenBalance.amount_real));
+            const sweepTx = await depositContract.sweepERC20Token(tokenBalance.currencyAddress, tokenBalance.amount_real);
             await databaseService.updateProcessedStatusByHash(tokenBalance.hash, sweepTx.hash, true);
 
             try {
