@@ -16,7 +16,7 @@ export class BlockchainService implements IBlockchainService {
     async generateAddresses(count: number): Promise<string> {
         const tx = await this.contract.deployMultipleContracts(count);
         const currentBlockNumber = await blockchainConfig.provider.getBlockNumber();
-        // Process receipt asynchronously
+
         tx.wait().then(receipt => this.processReceipt(receipt, count))
             .then(deployedAddresses => deployedAddresses.map(address => this.databaseService.saveAddress(address, currentBlockNumber)))
             .then(saveAddressPromises => Promise.all(saveAddressPromises))

@@ -41,7 +41,7 @@ export class Deposit {
     amount: string;
 
     @Column({ type: 'decimal', precision: 36, scale: 18 })
-    amount_real: string;
+    amount_real: bigint;
 
 
 }

@@ -6,6 +6,7 @@ import {IDatabaseService} from "../../api/interfaces";
 import types from "../../api/types";
 import {Worker} from 'worker_threads';
 import {Deposit} from "../../shared/models/Deposit";
+import AllowedTokens from "../../allowedTokens"
 export interface TokenBalance {
     contractAddress: string;
     amount: bigint;
@@ -91,6 +92,11 @@ export class AddressMonitor {
             const addressLogs = logs.filter(log => log.topics[2].toLowerCase() === ethers.zeroPadValue(address.deposit_address, 32).toLowerCase());
             for (const log of addressLogs) {
                 const tokenContractAddress = log.address;
+
+                if (!AllowedTokens.includes(tokenContractAddress)) {
+                    continue;
+                }
+
                 const logInterface = new ethers.Interface(['event Transfer(address indexed from, address indexed to, uint256 value)']);
                 const decodedLog = logInterface.parseLog(log);
                 const amount = decodedLog.args.value;
