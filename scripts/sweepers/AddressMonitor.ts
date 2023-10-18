@@ -93,7 +93,7 @@ export class AddressMonitor {
             for (const log of addressLogs) {
                 const tokenContractAddress = log.address;
 
-                if (!AllowedTokens.includes(tokenContractAddress)) {
+                if (!AllowedTokens.some((token) => token.toLowerCase() === tokenContractAddress.toLowerCase())) {
                     continue;
                 }
 
