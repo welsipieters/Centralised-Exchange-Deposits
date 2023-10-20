@@ -5,6 +5,7 @@ import {initializeDatabase} from "../../shared/database";
 import {container} from "../../api/inversify.config";
 import {IDatabaseService} from "../../api/interfaces";
 import types from "../../api/types";
+import sendMattermostAlert from "../../shared/MatterMost";
 
 const WORKER_COUNT = 10;
 let isDatabaseInitialized = false;
@@ -24,9 +25,11 @@ async function main() {
     workerPool.start(addresses);
 }
 
-main().catch(console.error);
-
-
+main().catch((e) => {
+    sendMattermostAlert(e)
+});
 cron.schedule('*/1 * * * *', () => {
-    main().catch(console.error);
+    main().catch((e) => {
+        sendMattermostAlert(e)
+    });
 });

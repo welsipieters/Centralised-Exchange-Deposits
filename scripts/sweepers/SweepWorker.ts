@@ -71,9 +71,6 @@ parentPort.on('message', async (message: WorkerMessage) => {
             } catch (e) {
                 await databaseService.updateProcessedStatusByHash(tokenBalance.hash, sweepTx.hash, false);
             }
-
-
-
         }
 
         // If balanceInfo.hasEth is true, perform sweep action for Ether
@@ -102,6 +99,7 @@ parentPort.on('message', async (message: WorkerMessage) => {
         // Send a message back to the main thread
         parentPort.postMessage(`Sweep completed for ${balanceInfo.address}`);
     } catch (error) {
+
         console.error('Error performing sweep action:', error);
         parentPort.postMessage(`Error performing sweep for ${balanceInfo.address}: ${error}`);
     }

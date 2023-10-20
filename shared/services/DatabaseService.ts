@@ -62,14 +62,7 @@ export class DatabaseService implements IDatabaseService {
     }
 
 
-    async findUnprocessedDepositsByToAddress(toAddress: string): Promise<Deposit[]> {
-        return await this.depositRepository.find({
-            where: {
-                toAddress: toAddress,
-                processed: false
-            }
-        });
-    }
+
 
     /**
      * Deletes a deposit address from the database.
@@ -101,9 +94,7 @@ export class DatabaseService implements IDatabaseService {
         }
     }
 
-    async updateProcessedStatusByHash(transactionHash: string, processTx: string, processed: boolean): Promise<void> {
-        await this.depositRepository.update({ hash: transactionHash }, { processed: processed, process_tx: processTx });
-    }
+
 
 
     async updateMultipleSweepNotificationCounts(sweepIds: number[]): Promise<void> {
@@ -117,9 +108,30 @@ export class DatabaseService implements IDatabaseService {
             .execute();
     }
 
+
+    async findUnprocessedDepositsByToAddress(toAddress: string): Promise<Deposit[]> {
+        return await this.depositRepository.find({
+            where: {
+                toAddress: toAddress,
+                processed: false
+            }
+        });
+    }
+
+    async updateProcessedStatusByHash(transactionHash: string, processTx: string, processed: boolean): Promise<void> {
+        await this.depositRepository.update({ hash: transactionHash }, { processed: processed, process_tx: processTx });
+    }
+
     async findDepositByHash(hash: string): Promise<Deposit | null> {
         return await this.depositRepository.findOne({where: {hash: hash}});
     }
+
+    async insertDeposit(depositData: Deposit): Promise<Deposit> {
+
+        return await this.depositRepository.save(depositData);
+    }
+
+
     async fetchAllInUseAddresses(): Promise<DepositAddress[]> {
         return await this.depositAddressRepository.find({
             where: {status: AddressStatus.IN_USE}
@@ -134,10 +146,6 @@ export class DatabaseService implements IDatabaseService {
         await this.depositAddressRepository.save(depositAddresses);
     }
 
-    async insertDeposit(depositData: Deposit): Promise<Deposit> {
-
-        return await this.depositRepository.save(depositData);
-    }
 
 
 }
