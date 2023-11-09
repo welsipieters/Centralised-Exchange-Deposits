@@ -137,7 +137,7 @@ export class AddressMonitor {
     }
 
     private sweep(currentBlockNumber: number, balanceInfo: BalanceInfo) {
-        const worker = new Worker('./scripts/sweepers/SzweepWorker.ts');
+        const worker = new Worker('./scripts/sweepers/SweepWorker.ts');
 
         // @ts-ignore
         worker.on('message', (message) => {
