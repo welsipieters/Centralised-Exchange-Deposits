@@ -6,6 +6,7 @@ import {container} from "../../api/inversify.config";
 import {IDatabaseService} from "../../api/interfaces";
 import types from "../../api/types";
 import sendMattermostAlert from "../../shared/MatterMost";
+import blockchainConfig from "../../shared/blockchainConfig";
 
 const WORKER_COUNT = 10;
 let isDatabaseInitialized = false;
@@ -15,6 +16,7 @@ async function main() {
         await initializeDatabase();
         isDatabaseInitialized = true;
     }
+
 
     const databaseService = container.get<IDatabaseService>(types.Database);
 

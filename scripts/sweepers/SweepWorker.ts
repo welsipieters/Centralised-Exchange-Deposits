@@ -79,9 +79,9 @@ parentPort.on('message', async (message: WorkerMessage) => {
             const depositContract = new ethers.Contract(balanceInfo.address, blockchainConfig.depositAbi, blockchainConfig.signer);
 
             // Call sweep function on the deposit contract for Ether
-            const sweepTx = await depositContract.sweepEther();
-            console.log('sweepTx', sweepTx.hash)
-            await sweepTx.wait(MIN_CONFIRMATIONS); // Wait for the transaction to be mined
+            // const sweepTx = await depositContract.sweepEther();
+            // console.log('sweepTx', sweepTx.hash)
+            // await sweepTx.wait(MIN_CONFIRMATIONS); // Wait for the transaction to be mined
             console.log(`Swept ${balanceInfo.ethAmount} Ether from ${balanceInfo.address}`);
 
 
@@ -102,8 +102,10 @@ parentPort.on('message', async (message: WorkerMessage) => {
             sweep.amount = ethers.parseEther(balanceInfo.ethAmount.toString()).toString()
             sweep.tokenContractAddress = '0x0000000';
             sweep.token_name = token;
-            sweep.transactionHash = sweepTx.hash;
+            sweep.transactionHash = "TEST";
             sweep.block = BigInt(currentBlockNumber);
+
+            console.log('New sweep:', sweep);
             await sweepRepository.save(sweep);
         }
 
