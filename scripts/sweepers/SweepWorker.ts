@@ -89,7 +89,7 @@ parentPort.on('message', async (message: WorkerMessage) => {
             let token = 'ETH'
             switch (process.env.BLOCKCHAIN_NETWORK) {
                 case 'polygon':
-                    token = 'POLY'
+                    token = 'MATIC'
                     break;
 
                 default:
