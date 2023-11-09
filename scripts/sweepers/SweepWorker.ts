@@ -61,7 +61,7 @@ parentPort.on('message', async (message: WorkerMessage) => {
 
                 const sweep = new Sweep();
                 sweep.address = balanceInfo.address;
-                sweep.tokenContractAddress = tokenBalance.currencyAddress;
+                sweep.tokenContractAddress =  tokenBalance.currencyAddress;
                 sweep.amount = tokenBalance.amount
                 sweep.transactionHash = 'sweepTx.hash;'
                 sweep.token_name = tokenSymbol;
@@ -99,7 +99,7 @@ parentPort.on('message', async (message: WorkerMessage) => {
 
             const sweep = new Sweep();
             sweep.address = balanceInfo.address;
-            sweep.amount = ethers.parseEther(balanceInfo.ethAmount.toString()).toString()
+            sweep.amount = ethers.formatEther(balanceInfo.ethAmount.toString()).toString()
             sweep.tokenContractAddress = '0x0000000';
             sweep.token_name = token;
             sweep.transactionHash = "TEST";
