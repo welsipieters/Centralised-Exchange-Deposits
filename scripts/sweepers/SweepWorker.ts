@@ -52,18 +52,18 @@ parentPort.on('message', async (message: WorkerMessage) => {
             const tokenDecimals = await tokenContract.decimals();
 
             // Call sweepToken on the deposit contract for each token with a new balance
-            // const sweepTx = await depositContract.sweepERC20Token(tokenBalance.currencyAddress, tokenBalance.amount_real);
+            const sweepTx = await depositContract.sweepERC20Token(tokenBalance.currencyAddress, tokenBalance.amount_real);
             await databaseService.updateProcessedStatusByHash(tokenBalance.hash, 'sweepTx.hash', true);
 
             try {
-                // await sweepTx.wait(MIN_CONFIRMATIONS); // Wait for the transaction to be mined
+                await sweepTx.wait(MIN_CONFIRMATIONS); // Wait for the transaction to be mined
                 console.log(`Swept ${tokenBalance.amount} from ${tokenBalance.currencyAddress}`);
 
                 const sweep = new Sweep();
                 sweep.address = balanceInfo.address;
                 sweep.tokenContractAddress =  tokenBalance.currencyAddress;
                 sweep.amount = tokenBalance.amount
-                sweep.transactionHash = 'sweepTx.hash;'
+                sweep.transactionHash = tokenBalance.hash;
                 sweep.token_name = tokenSymbol;
                 sweep.block = BigInt(currentBlockNumber);
                 console.log('New sweep:', sweep)
@@ -79,9 +79,9 @@ parentPort.on('message', async (message: WorkerMessage) => {
             const depositContract = new ethers.Contract(balanceInfo.address, blockchainConfig.depositAbi, blockchainConfig.signer);
 
             // Call sweep function on the deposit contract for Ether
-            // const sweepTx = await depositContract.sweepEther();
-            // console.log('sweepTx', sweepTx.hash)
-            // await sweepTx.wait(MIN_CONFIRMATIONS); // Wait for the transaction to be mined
+            const sweepTx = await depositContract.sweepEther();
+            console.log('sweepTx', sweepTx.hash)
+            await sweepTx.wait(MIN_CONFIRMATIONS); // Wait for the transaction to be mined
             console.log(`Swept ${balanceInfo.ethAmount} Ether from ${balanceInfo.address}`);
 
 
@@ -102,7 +102,7 @@ parentPort.on('message', async (message: WorkerMessage) => {
             sweep.amount = ethers.formatEther(balanceInfo.ethAmount.toString()).toString()
             sweep.tokenContractAddress = '0x0000000';
             sweep.token_name = token;
-            sweep.transactionHash = "TEST";
+            sweep.transactionHash = sweepTx.hash;
             sweep.block = BigInt(currentBlockNumber);
 
             console.log('New sweep:', sweep);
