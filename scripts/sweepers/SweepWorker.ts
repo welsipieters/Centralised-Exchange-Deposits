@@ -86,11 +86,22 @@ parentPort.on('message', async (message: WorkerMessage) => {
 
 
 
+            let token = 'ETH'
+            switch (process.env.BLOCKCHAIN_NETWORK) {
+                case 'polygon':
+                    token = 'POLY'
+                    break;
+
+                default:
+                    token = 'ETH'
+                    break;
+            }
+
             const sweep = new Sweep();
             sweep.address = balanceInfo.address;
             sweep.amount = ethers.parseEther(balanceInfo.ethAmount.toString()).toString()
             sweep.tokenContractAddress = '0x0000000';
-            sweep.token_name = 'ETH';
+            sweep.token_name = token;
             sweep.transactionHash = sweepTx.hash;
             sweep.block = BigInt(currentBlockNumber);
             await sweepRepository.save(sweep);
