@@ -17,11 +17,9 @@ async function main() {
         isDatabaseInitialized = true;
     }
 
-
     const databaseService = container.get<IDatabaseService>(types.Database);
 
     const addresses = await databaseService.fetchAllInUseAddresses();
-
     const workerPool = new WorkerPool(WORKER_COUNT); // for example, 10 workers
 
     workerPool.start(addresses);

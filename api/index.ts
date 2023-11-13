@@ -13,6 +13,7 @@ import HttpProxyAgent, {HttpsProxyAgent} from 'https-proxy-agent'
 import axios from "axios";
 import postSweepTransactions from "./crons/postSweepTransaction";
 import fetchAddressesFromExternalAPI from "./crons/fetchAddressesFromExternalAPI";
+import checkForFinishedSweep from "./crons/checkForFinishedSweep";
 
 const config = {
     knakenURL: process.env.KNAKEN_URL!,
@@ -23,6 +24,7 @@ const config = {
 };
 
 cron.schedule('*/1 * * * *', () => postSweepTransactions(config));
+cron.schedule('*/1 * * * *', () => checkForFinishedSweep());
 cron.schedule('*/10 * * * * *', () => fetchAddressesFromExternalAPI(config));
 
 

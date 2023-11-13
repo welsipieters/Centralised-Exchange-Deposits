@@ -28,4 +28,12 @@ export class Sweep {
 
     @Column({ type: 'int', default: 0 })
     core_notifications: number;
+
+    // New field: processed
+    @Column({ type: 'boolean', default: false })
+    processed: boolean;
+
+    // New field: sweepHash
+    @Column({ type: 'varchar', nullable: true })
+    sweepHash: string|null;
 }

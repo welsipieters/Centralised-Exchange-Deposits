@@ -31,16 +31,16 @@ export class Deposit {
     @Column('varchar', { name: 'hash' })
     hash: string;
 
-    @Column('varchar', { name: 'process_tx' })
-    process_tx: string;
+    @Column('varchar', { name: 'process_tx', nullable: true })
+    process_tx: string|null;
 
     @Column({ type: 'boolean', default: false })
     processed: boolean;
 
-    @Column({ type: 'decimal', precision: 36, scale: 18 })
+    @Column({ type: 'varchar' })
     amount: string;
 
-    @Column({ type: 'decimal', precision: 36, scale: 18 })
+    @Column({ type: 'varchar' })
     amount_real: bigint;
 
 

@@ -26,4 +26,7 @@ export class DepositAddress {
 
     @Column({ type: 'bigint', nullable: true })
     last_seen_at_block: number;
+
+    @Column({type: "varchar", nullable: true })
+    last_seen_balance: string;
 }

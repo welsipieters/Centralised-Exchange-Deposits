@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import {ethers} from 'ethers';
 import {IBlockchainService, IDatabaseService} from "../../api/interfaces";
 import {injectable} from "inversify";
 import blockchainConfig from "../blockchainConfig";
@@ -46,5 +46,27 @@ export class BlockchainService implements IBlockchainService {
         }
 
         return deployedAddresses;
+    }
+
+    async getTransactionConfirmations(txHash: string): Promise<number> {
+        try {
+            // Get the transaction receipt
+            const receipt = await blockchainConfig.provider.getTransactionReceipt(txHash);
+
+            // Check if the transaction has been mined
+            if (receipt && receipt.blockNumber) {
+                // Get the current block number
+                const currentBlockNumber = await blockchainConfig.provider.getBlockNumber();
+
+                // Calculate the number of confirmations
+                return currentBlockNumber - receipt.blockNumber;
+            } else {
+                // Transaction is not mined yet
+                return 0;
+            }
+        } catch (error) {
+            console.error('Error fetching transaction receipt:', error);
+            return -1; // Indicate that an error occurred
+        }
     }
 }

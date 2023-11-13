@@ -37,7 +37,7 @@ parentPort.on('message', async (message: WorkerMessage) => {
     try {
         let sweepRepository;
 
-        if (balanceInfo.hasEth || balanceInfo.tokens.length > 0) {
+        if (balanceInfo.ethDeposits.length > 0 || balanceInfo.tokens.length > 0) {
             sweepRepository = getRepository(Sweep);
         }
 
@@ -52,11 +52,11 @@ parentPort.on('message', async (message: WorkerMessage) => {
             const tokenDecimals = await tokenContract.decimals();
 
             // Call sweepToken on the deposit contract for each token with a new balance
-            const sweepTx = await depositContract.sweepERC20Token(tokenBalance.currencyAddress, tokenBalance.amount_real);
-            await databaseService.updateProcessedStatusByHash(tokenBalance.hash, 'sweepTx.hash', true);
+            const sweepTx = await depositContract.sweepERC20Token(tokenBalance.currencyAddress, `${tokenBalance.amount_real}`);
+            await databaseService.updateProcessedStatusByHash(tokenBalance.hash, sweepTx.hash, true);
 
             try {
-                await sweepTx.wait(MIN_CONFIRMATIONS); // Wait for the transaction to be mined
+
                 console.log(`Swept ${tokenBalance.amount} from ${tokenBalance.currencyAddress}`);
 
                 const sweep = new Sweep();
@@ -64,49 +64,63 @@ parentPort.on('message', async (message: WorkerMessage) => {
                 sweep.tokenContractAddress =  tokenBalance.currencyAddress;
                 sweep.amount = tokenBalance.amount
                 sweep.transactionHash = tokenBalance.hash;
+                sweep.sweepHash = sweepTx.hash;
                 sweep.token_name = tokenSymbol;
                 sweep.block = BigInt(currentBlockNumber);
                 console.log('New sweep:', sweep)
                 await sweepRepository.save(sweep);
             } catch (e) {
-                await databaseService.updateProcessedStatusByHash(tokenBalance.hash, 'sweepTx.hash', false);
+                await databaseService.updateProcessedStatusByHash(tokenBalance.hash, sweepTx.hash, false);
             }
         }
 
         // If balanceInfo.hasEth is true, perform sweep action for Ether
-        if (balanceInfo.hasEth) {
-            console.log(`Sweeping ${balanceInfo.ethAmount} Ether from ${balanceInfo.address}`)
-            const depositContract = new ethers.Contract(balanceInfo.address, blockchainConfig.depositAbi, blockchainConfig.signer);
-
-            // Call sweep function on the deposit contract for Ether
-            const sweepTx = await depositContract.sweepEther();
-            console.log('sweepTx', sweepTx.hash)
-            await sweepTx.wait(MIN_CONFIRMATIONS); // Wait for the transaction to be mined
-            console.log(`Swept ${balanceInfo.ethAmount} Ether from ${balanceInfo.address}`);
-
-
-
-            let token = 'ETH'
-            switch (process.env.BLOCKCHAIN_NETWORK) {
-                case 'polygon':
-                    token = 'MATIC'
-                    break;
-
-                default:
-                    token = 'ETH'
-                    break;
+        if (balanceInfo.ethDeposits.length > 0) {
+            const hasUnprocessed = await databaseService.checkUnprocessedSweepByAddress(balanceInfo.address);
+            if (hasUnprocessed) {
+                console.log('Unprocessed sweep exists for address', balanceInfo.address);
+                return;
             }
 
-            const sweep = new Sweep();
-            sweep.address = balanceInfo.address;
-            sweep.amount = ethers.formatEther(balanceInfo.ethAmount.toString()).toString()
-            sweep.tokenContractAddress = '0x0000000';
-            sweep.token_name = token;
-            sweep.transactionHash = sweepTx.hash;
-            sweep.block = BigInt(currentBlockNumber);
+            const depositContract = new ethers.Contract(balanceInfo.address, blockchainConfig.depositAbi, blockchainConfig.signer);
+            for (const ethDeposit of balanceInfo.ethDeposits) {
 
-            console.log('New sweep:', sweep);
-            await sweepRepository.save(sweep);
+                const sweepTx = await depositContract.sweepEther();
+                await databaseService.updateProcessedStatusByHash(ethDeposit.hash, sweepTx.hash, true);
+                console.log('sweepTx', sweepTx.hash)
+
+                let token = 'ETH'
+                switch (process.env.BLOCKCHAIN_NETWORK) {
+                    case 'polygon':
+                        token = 'MATIC'
+                        break;
+
+                    default:
+                        token = 'ETH'
+                        break;
+                }
+
+                try {
+
+                    const sweep = new Sweep();
+                    sweep.address = balanceInfo.address;
+                    sweep.amount = ethDeposit.amount;
+                    sweep.tokenContractAddress = '0x0000000';
+                    sweep.token_name = token;
+                    sweep.transactionHash = sweepTx.hash;
+                    sweep.block = BigInt(currentBlockNumber);
+                    sweep.sweepHash = sweepTx.hash;
+
+                    console.log('New sweep:', sweep);
+                    await sweepRepository.save(sweep);
+
+                    const receipt = await sweepTx.wait();
+                    console.log('receipt', receipt)
+                }
+                catch (e) {
+                    await databaseService.updateProcessedStatusByHash(ethDeposit.hash, null, false);
+                }
+            }
         }
 
         // Send a message back to the main thread

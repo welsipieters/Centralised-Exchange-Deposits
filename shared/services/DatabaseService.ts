@@ -1,4 +1,4 @@
-import {getRepository, LessThan, Repository} from 'typeorm';
+import {getRepository, IsNull, LessThan, Not, Repository} from 'typeorm';
 import {DepositAddress} from '../models/DepositAddress';
 import {injectable} from 'inversify';
 import {IDatabaseService} from "../../api/interfaces";
@@ -53,6 +53,21 @@ export class DatabaseService implements IDatabaseService {
         return unusedAddress;
     }
 
+    async updateLastSeenBalance(addressString: string, newBalance: string): Promise<DepositAddress | null> {
+        try {
+            // Attempt to update the last seen balance for the given address.
+            const result = await this.depositAddressRepository.update(
+                { deposit_address: addressString },
+                { last_seen_balance: newBalance }
+            );
+
+            // Check if the address was updated and return the updated address, otherwise return null.
+            return result.affected ? await this.depositAddressRepository.findOne({ where: { deposit_address: addressString } }) : null;
+        } catch (error) {
+            console.error('Error updating last seen balance:', error);
+            return null;
+        }
+    }
     /**
      * Finds a deposit address by its ID.
      * @param id The ID of the deposit address.
@@ -78,7 +93,39 @@ export class DatabaseService implements IDatabaseService {
      */
     async fetchSweepsWithLowNotifications(): Promise<Sweep[]> {
         return await this.sweepRepository.find({
-            where: {core_notifications: LessThan(5)}
+            where: {
+                core_notifications: LessThan(5),
+                processed: true
+            }
+        });
+    }
+
+    async checkUnprocessedSweepByAddress(toAddress: string): Promise<boolean> {
+        const unprocessedSweepExists = await this.sweepRepository.count({
+            where: {
+                tokenContractAddress: "0x0000000",
+                address: toAddress,
+                processed: false
+            }
+        });
+
+        return unprocessedSweepExists > 0;
+    }
+
+    async updateSweepConfirmed(id: number): Promise<void> {
+        const sweepToUpdate = await this.sweepRepository.findOneBy({id: id});
+        if (sweepToUpdate) {
+            sweepToUpdate.processed = true;
+            await this.sweepRepository.save(sweepToUpdate);
+        }
+    }
+
+    async fetchSweepsWithUnconfirmedTransaction(): Promise<Sweep[]> {
+        return await this.sweepRepository.find({
+            where: {
+                sweepHash: Not(IsNull()),
+                processed: false
+            }
         });
     }
 
@@ -109,16 +156,27 @@ export class DatabaseService implements IDatabaseService {
     }
 
 
-    async findUnprocessedDepositsByToAddress(toAddress: string): Promise<Deposit[]> {
+    async findUnprocessedTokenDepositsByToAddress(toAddress: string): Promise<Deposit[]> {
         return await this.depositRepository.find({
             where: {
                 toAddress: toAddress,
+                processed: false,
+                currencyAddress: Not('0x0')
+            }
+        });
+    }
+
+    async findUnprocessedEthDepositsByToAddress(toAddress: string): Promise<Deposit[]> {
+        return await this.depositRepository.find({
+            where: {
+                toAddress: toAddress,
+                currencyAddress: '0x0',
                 processed: false
             }
         });
     }
 
-    async updateProcessedStatusByHash(transactionHash: string, processTx: string, processed: boolean): Promise<void> {
+    async updateProcessedStatusByHash(transactionHash: string, processTx: string|null, processed: boolean): Promise<void> {
         await this.depositRepository.update({ hash: transactionHash }, { processed: processed, process_tx: processTx });
     }
 

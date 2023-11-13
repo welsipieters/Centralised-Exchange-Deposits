@@ -4,11 +4,18 @@ import {Deposit} from "../shared/models/Deposit";
 
 export interface IBlockchainService {
     generateAddresses(count: number): Promise<string>;
+    getTransactionConfirmations(txHash: string): Promise<number>;
+
 }
 
 export interface IDatabaseService {
-    updateProcessedStatusByHash(transactionHash: string, processTx: string, processed: boolean): Promise<void>
-    findUnprocessedDepositsByToAddress(toAddress: string): Promise<Deposit[]>
+    checkUnprocessedSweepByAddress(toAddress: string): Promise<boolean>
+    updateLastSeenBalance(addressString: string, newBalance: string): Promise<DepositAddress | null>
+    fetchSweepsWithUnconfirmedTransaction(): Promise<Sweep[]>;
+    updateSweepConfirmed(id: number): Promise<void>;
+    updateProcessedStatusByHash(transactionHash: string, processTx: string|null, processed: boolean): Promise<void>
+    findUnprocessedTokenDepositsByToAddress(toAddress: string): Promise<Deposit[]>
+    findUnprocessedEthDepositsByToAddress(toAddress: string): Promise<Deposit[]>
     findDepositByHash(hash: string): Promise<Deposit | null>;
     saveAddress(address: string, block: number): Promise<DepositAddress>;
     fetchAndMarkUnusedAddress(): Promise<DepositAddress | null>;
