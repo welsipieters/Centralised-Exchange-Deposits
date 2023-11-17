@@ -15,7 +15,7 @@ const CONFIRMATION_THRESHOLD = +process.env.MIN_CONFIRMATIONS || 12; // Default 
 class DepositListener {
     private databaseService: IDatabaseService;
     private provider: ethers.JsonRpcProvider;
-    private confirmedTransactions: Set<string>;
+    private confirmedTransactions: Map<string, number>;
     private monitoredAddresses: Set<string>;
 
     constructor() {
@@ -23,7 +23,7 @@ class DepositListener {
 
         this.databaseService = container.get<IDatabaseService>(types.Database);
         this.provider = blockchainConfig.provider;
-        this.confirmedTransactions = new Set();
+        this.confirmedTransactions = new Map();
         this.monitoredAddresses = new Set();
     }
 
@@ -45,34 +45,49 @@ class DepositListener {
         }
     }
 
+    // private async listenForDeposits(): Promise<void> {
+    //     this.provider.on("block", async (blockNumber) => {
+    //         console.log(`Received new block: ${blockNumber}`);
+    //         try {
+    //             await this.checkForConfirmedTransactions(blockNumber - CONFIRMATION_THRESHOLD);
+    //             const block = await this.provider.getBlock(blockNumber);
+    //             if (!block) return;
+    //
+    //             const transactions = await Promise.all(block.transactions.map(txHash => this.provider.getTransaction(txHash)));
+    //             console.log(`Processing ${transactions.length} transactions from block ${blockNumber}`);
+    //
+    //             for (const transaction of transactions) {
+    //                 if (transaction && transaction.to && this.monitoredAddresses.has(transaction.to.toLowerCase()) && transaction.value > ethers.parseEther('0')) {
+    //                     console.log(`Relevant transaction detected: ${transaction.hash}`);
+    //                     this.confirmedTransactions.add(transaction.hash);
+    //
+    //
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             console.error(`Error processing block ${blockNumber}:`, error);
+    //         }
+    //     });
+    // }
+    //
+
+
     private async listenForDeposits(): Promise<void> {
-        this.provider.on("block", async (blockNumber) => {
+        await this.provider.on("block", async (blockNumber) => {
             console.log(`Received new block: ${blockNumber}`);
             try {
                 await this.checkForConfirmedTransactions(blockNumber - CONFIRMATION_THRESHOLD);
-                const block = await this.provider.getBlock(blockNumber);
+
+                const block = await this.provider.getBlock(blockNumber, true);
                 if (!block) return;
 
-                const transactions = await Promise.all(block.transactions.map(txHash => this.provider.getTransaction(txHash)));
-                console.log(`Processing ${transactions.length} transactions from block ${blockNumber}`);
+                console.log(`Processing ${block.transactions.length} transactions from block ${blockNumber}`);
 
-                for (const transaction of transactions) {
+                for (const transaction of block.prefetchedTransactions) {
                     if (transaction && transaction.to && this.monitoredAddresses.has(transaction.to.toLowerCase()) && transaction.value > ethers.parseEther('0')) {
                         console.log(`Relevant transaction detected: ${transaction.hash}`);
-                        this.confirmedTransactions.add(transaction.hash);
 
-                        const tokenDeposit = new Deposit();
-                        tokenDeposit.hash = transaction.hash;
-                        tokenDeposit.blockNumber = blockNumber;
-                        tokenDeposit.fromAddress = transaction.from;
-                        tokenDeposit.toAddress = transaction.to;
-                        tokenDeposit.currencyAddress = '0x0';
-                        tokenDeposit.currencyName = 'ETH';
-                        tokenDeposit.amount = ethers.formatEther(transaction.value);
-                        tokenDeposit.amount_real = transaction.value;
-
-
-                        await this.databaseService.insertDeposit(tokenDeposit);
+                        this.confirmedTransactions.set(transaction.hash, blockNumber);
                     }
                 }
             } catch (error) {
@@ -81,24 +96,30 @@ class DepositListener {
         });
     }
 
+    private async checkForConfirmedTransactions(currentBlockNumber: number): Promise<void> {
+        for (const [hash, transactionBlockNumber] of this.confirmedTransactions) {
+            if (currentBlockNumber - transactionBlockNumber >= CONFIRMATION_THRESHOLD) {
+                const receipt = await this.provider.getTransaction(hash);
+                if (receipt && receipt.blockNumber && receipt.blockNumber <= transactionBlockNumber + CONFIRMATION_THRESHOLD) {
+                    console.log(`Confirmed transaction: ${hash}`);
+                    this.confirmedTransactions.delete(hash);
 
-    private async checkForConfirmedTransactions(blockNumber: number): Promise<void> {
-        const confirmationBlockNumber = blockNumber - CONFIRMATION_THRESHOLD;
-        if (isNaN(confirmationBlockNumber)) {
-            console.error('Invalid confirmation block number');
-            return;
-        }
+                    const tokenDeposit = new Deposit();
+                    tokenDeposit.hash = receipt.hash;
+                    tokenDeposit.blockNumber = currentBlockNumber;
+                    tokenDeposit.fromAddress = receipt.from;
+                    tokenDeposit.toAddress = receipt.to ?? '';
+                    tokenDeposit.currencyAddress = '0x0';
+                    tokenDeposit.currencyName = 'ETH';
+                    tokenDeposit.amount = ethers.formatEther(receipt.value);
+                    tokenDeposit.amount_real = receipt.value;
 
-        console.log(`Checking for confirmed transactions up to block ${confirmationBlockNumber}`);
-        for (const hash of this.confirmedTransactions) {
-            const receipt = await this.provider.getTransactionReceipt(hash);
-            if (receipt && receipt.blockNumber <= confirmationBlockNumber) {
-                console.log(`Confirmed transaction: ${hash}`);
-                this.confirmedTransactions.delete(hash);
-                // Process the confirmed transaction here
+                    await this.databaseService.insertDeposit(tokenDeposit);
+                }
             }
         }
     }
+
 }
 
 
