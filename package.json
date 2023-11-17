@@ -53,6 +53,7 @@
     "serve": "hardhat run api/index.ts",
     "watch": "hardhat run scripts/sweepers/index.ts",
     "sweep": "hardhat run test.js",
-    "start": "concurrently \"npm:serve\" \"npm:watch\""
+    "start": "concurrently \"npm:serve\" \"npm:watch\"",
+    "websocket": "hardhat run scripts/hacks/websocket.ts"
   }
 }

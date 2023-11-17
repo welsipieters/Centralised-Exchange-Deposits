@@ -82,10 +82,13 @@ parentPort.on('message', async (message: WorkerMessage) => {
                 return;
             }
 
+            console.log(`Sweeping ${balanceInfo.ethDeposits.length} ETH transactions from ${balanceInfo.address}`)
+
             const depositContract = new ethers.Contract(balanceInfo.address, blockchainConfig.depositAbi, blockchainConfig.signer);
+            const sweepTx = await depositContract.sweepEther();
             for (const ethDeposit of balanceInfo.ethDeposits) {
 
-                const sweepTx = await depositContract.sweepEther();
+
                 await databaseService.updateProcessedStatusByHash(ethDeposit.hash, sweepTx.hash, true);
                 console.log('sweepTx', sweepTx.hash)
 
@@ -114,8 +117,8 @@ parentPort.on('message', async (message: WorkerMessage) => {
                     console.log('New sweep:', sweep);
                     await sweepRepository.save(sweep);
 
-                    const receipt = await sweepTx.wait();
-                    console.log('receipt', receipt)
+                    // const receipt = await sweepTx.wait();
+                    // console.log('receipt', receipt)
                 }
                 catch (e) {
                     await databaseService.updateProcessedStatusByHash(ethDeposit.hash, null, false);

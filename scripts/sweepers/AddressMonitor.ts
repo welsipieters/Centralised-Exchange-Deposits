@@ -43,7 +43,7 @@ export class AddressMonitor {
             console.log('Balance info:', balanceInfo);
             for (const tokenBalance of balanceInfo) {
 
-                if (tokenBalance.hasEth || tokenBalance.tokens.length > 0) {
+                if (tokenBalance.ethDeposits.length > 0 || tokenBalance.tokens.length > 0) {
                     console.log(`Found new balance for ${tokenBalance.address}`);
 
                     this.sweep(currentBlockNumber, tokenBalance);
@@ -172,8 +172,8 @@ export class AddressMonitor {
             });
         }
 
-
-
+        console.log('All balance info:', allBalanceInfo)
+        // process.exit(0)
         return allBalanceInfo;
     }
 
