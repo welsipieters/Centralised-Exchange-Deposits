@@ -104,13 +104,25 @@ class DepositListener {
                     console.log(`Confirmed transaction: ${hash}`);
                     this.confirmedTransactions.delete(hash);
 
+                    let token = 'ETH'
+                    switch (process.env.BLOCKCHAIN_NETWORK) {
+                        case 'polygon':
+                            token = 'MATIC'
+                            break;
+
+                        default:
+                            token = 'ETH'
+                            break;
+                    }
+
+
                     const tokenDeposit = new Deposit();
                     tokenDeposit.hash = receipt.hash;
                     tokenDeposit.blockNumber = currentBlockNumber;
                     tokenDeposit.fromAddress = receipt.from;
                     tokenDeposit.toAddress = receipt.to ?? '';
                     tokenDeposit.currencyAddress = '0x0';
-                    tokenDeposit.currencyName = 'ETH';
+                    tokenDeposit.currencyName = token;
                     tokenDeposit.amount = ethers.formatEther(receipt.value);
                     tokenDeposit.amount_real = receipt.value;
 
