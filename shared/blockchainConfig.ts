@@ -14,6 +14,7 @@ export class BlockchainConfig {
 
     constructor() {
         this.network = process.env.BLOCKCHAIN_NETWORK || 'hardhat';
+        console.log(hardhatConfig)
         const hardhatNetworkConfig = hardhatConfig.networks?.[this.network]
 
         if (!hardhatNetworkConfig) {

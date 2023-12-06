@@ -2,7 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import 'dotenv/config';
 import "hardhat-gas-reporter";
-
+import "./scripts/hacks/addSweepToDB"
 const config: HardhatUserConfig = {
     solidity: {
         version: "0.8.19",

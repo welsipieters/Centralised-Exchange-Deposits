@@ -19,7 +19,8 @@
     "node-fetch": "^3.3.2",
     "reflect-metadata": "^0.1.13",
     "start": "^5.1.0",
-    "typeorm": "^0.3.17"
+    "typeorm": "^0.3.17",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
@@ -54,6 +55,7 @@
     "watch": "hardhat run scripts/sweepers/index.ts",
     "sweep": "hardhat run test.js",
     "start": "concurrently \"npm:serve\" \"npm:watch\"",
-    "websocket": "hardhat run scripts/hacks/websocket.ts"
+    "websocket": "hardhat run scripts/hacks/websocket.ts",
+    "ercTx": "hardhat run scripts/hacks/addSweepToDB.ts"
   }
 }
